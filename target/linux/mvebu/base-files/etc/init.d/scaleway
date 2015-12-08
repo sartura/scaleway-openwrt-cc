@@ -1,0 +1,32 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=40
+
+RESOLV_PATH="/run/initramfs/etc/resolv.conf"
+HOSTNAME_PATH="/etc/hostname"
+
+boot() {
+
+if [ -e "$RESOLV_PATH" ]; then
+	uci delete dhcp.@dnsmasq[-1].server
+
+        grep 'nameserver' $RESOLV_PATH | awk '{print $2}' | \
+                while read line;
+                do
+                        uci add_list dhcp.@dnsmasq[-1].server="$line"
+                done
+
+        uci commit
+fi
+
+if [ -e "$HOSTNAME_PATH" ]; then
+	local hostname
+
+	hostname="$(cat $HOSTNAME_PATH)"
+	echo "$hostname" > /proc/sys/kernel/hostname
+
+	uci set system.@system[0].hostname="$hostname"
+	uci commit
+fi
+}

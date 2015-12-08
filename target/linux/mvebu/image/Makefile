@@ -22,6 +22,14 @@ define Image/Build/DTB
 		$(KDIR)/zImage$(2)-$(1), $(KDIR)/uImage$(2)-$(1))
 endef
 
+define Image/Build/scaleway
+	cp $(KDIR)/zImage$(2) $(KDIR)/zImage$(2)-$(1);
+	cp $(DTS_DIR)/$(1).dtb $(KDIR)/$(1).dtb;
+	$(call Image/BuildKernel/MkuImage, \
+		none, $(LOADADDR), $(LOADADDR), \
+		$(KDIR)/zImage$(2)-$(1), $(KDIR)/uImage$(2)-$(1))
+endef
+
 # $(1): Profile Name
 # $(2): DTB Name
 # $(3): Erase Block Size
@@ -100,6 +108,25 @@ define NORProfile
 endef
 
 # $(1): Profile Name
+# $(2): DTB Name
+define NOFLASHProfile
+  define Image/BuildKernel/Profile/$(1)
+	$(call Image/Build/scaleway,$(2))
+	cp $(KDIR)/$(2).dtb $$(BIN_DIR)/$(2).dtb
+	cp $(KDIR)/uImage-$(2) $$(BIN_DIR)/uImage-$(2)
+    ifneq ($(CONFIG_TARGET_ROOTFS_INITRAMFS),)
+	$(call Image/Build/Profile,$(1)/Initramfs)
+    endif
+  endef
+
+  define Image/Build/Profile/$(1)/Initramfs
+	$(call Image/Build/DTB,$(2),-initramfs)
+  endef
+
+  PROFILES_LIST += $(1)
+endef
+
+# $(1): Profile Name
 # $(2): Sub Profiles list
 define MultiProfile
   define Image/BuildKernel/Profile/$(1)
@@ -142,6 +169,9 @@ $(eval $(call UBINORProfile,OpenBlocks-AX-3-4,armada-xp-openblocks-ax3-4,128KiB)
 
 # Boards with small NOR, where UBI doesn't make sense
 $(eval $(call NORProfile,385-RD,armada-385-rd,256KiB))
+
+# scaleway c1
+$(eval $(call NOFLASHProfile,SCALEWAY-C1,armada-xp-scaleway-c1))
 
 ###
 ### Linksys

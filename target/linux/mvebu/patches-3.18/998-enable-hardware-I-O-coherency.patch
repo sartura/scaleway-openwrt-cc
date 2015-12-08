@@ -1,0 +1,11 @@
+--- a/arch/arm/mach-mvebu/coherency.c
++++ b/arch/arm/mach-mvebu/coherency.c
+@@ -355,7 +355,7 @@ static int coherency_type(void)
+ 
+ int coherency_available(void)
+ {
+-	return coherency_type() != COHERENCY_FABRIC_TYPE_NONE;
++	return true;
+ }
+ 
+ int __init coherency_init(void)
